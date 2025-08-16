@@ -1,0 +1,19 @@
+name: Build ASI Plugin
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup build tools
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Install prerequisites
+      run: |
+        choco install -y cmake
+        choco install -y
