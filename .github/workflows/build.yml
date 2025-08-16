@@ -13,23 +13,21 @@ jobs:
     - name: Setup build tools
       uses: microsoft/setup-msbuild@v1
 
-    - name: Download and build Detours
+    - name: Build Detours
       run: |
-        mkdir Detours
-        cd Detours
-        git clone https://github.com/microsoft/Detours.git .
+        cd Detours-main
         nmake
 
     - name: Verify Detours
       run: |
-        ls Detours/src/detours.h
-        ls Detours/lib.X64/detours.lib
+        ls Detours-main/src/detours.h
+        ls Detours-main/lib.X64/detours.lib
 
     - name: Configure and build
       run: |
         mkdir build
         cd build
-        cmake -G "Visual Studio 17 2022" -A x64 -DDETOURS_INCLUDE_DIR=../Detours/src -DDETOURS_LIBRARY=../Detours/lib.X64/detours.lib ..
+        cmake -G "Visual Studio 17 2022" -A x64 -DDETOURS_INCLUDE_DIR=../Detours-main/src -DDETOURS_LIBRARY=../Detours-main/lib.X64/detours.lib ..
         cmake --build . --config Release --target SAMPInjection -- /m
 
     - name: Upload artifact
