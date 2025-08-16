@@ -5,16 +5,15 @@ project(SAMPInjection)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_SHARED_LIBRARY_SUFFIX ".asi")
 
-# Пути к Detours
+# Пути к Detours (с учётом Detours-main)
 set(DETOURS_ROOT ${CMAKE_SOURCE_DIR}/Detours-main)
 set(DETOURS_INCLUDE ${DETOURS_ROOT}/src)
+set(DETOURS_LIB ${DETOURS_ROOT}/lib.X64/detours.lib)
 
-# Сначала собираем Detours
-add_custom_command(
-    OUTPUT ${DETOURS_ROOT}/lib.X64/detours.lib
-    COMMAND nmake
-    WORKING_DIRECTORY ${DETOURS_ROOT}
-)
+# Проверка наличия Detours
+if(NOT EXISTS ${DETOURS_INCLUDE}/detours.h)
+    message(FATAL_ERROR "Detours not found! Expected at: ${DETOURS_ROOT}")
+endif()
 
 # Основной плагин
 add_library(SAMPInjection SHARED 
@@ -22,12 +21,11 @@ add_library(SAMPInjection SHARED
     src/resources.rc
 )
 
-# Зависимости и линковка
-add_dependencies(SAMPInjection ${DETOURS_ROOT}/lib.X64/detours.lib)
+# Подключение Detours
 target_include_directories(SAMPInjection PRIVATE ${DETOURS_INCLUDE})
-target_link_libraries(SAMPInjection PRIVATE ${DETOURS_ROOT}/lib.X64/detours.lib)
+target_link_libraries(SAMPInjection PRIVATE ${DETOURS_LIB})
 
 # Для MSVC
 if(MSVC)
-    target_compile_options(SAMPInjection PRIVATE /W0 /EHsc)
+    target_compile_options(SAMPInjection PRIVATE /W0 /EHsc /D_CRT_SECURE_NO_WARNINGS)
 endif()
