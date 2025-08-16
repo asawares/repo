@@ -1,0 +1,5 @@
+#define IDR_HTML 1000
+#define IDR_JS   1001
+
+IDR_HTML RCDATA "..\\resources\\index.html"
+IDR_JS   RCDATA "..\\resources\\custom.js"
