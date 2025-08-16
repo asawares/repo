@@ -10,24 +10,19 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup build tools
-      uses: microsoft/setup-msbuild@v1
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1  # Правильная настройка окружения
 
     - name: Build Detours
       run: |
         cd Detours-main
-        nmake
-
-    - name: Verify Detours
-      run: |
-        ls Detours-main/src/detours.h
-        ls Detours-main/lib.X64/detours.lib
+        nmake /NOLOGO
 
     - name: Configure and build
       run: |
         mkdir build
         cd build
-        cmake -G "Visual Studio 17 2022" -A x64 -DDETOURS_INCLUDE_DIR=../Detours-main/src -DDETOURS_LIBRARY=../Detours-main/lib.X64/detours.lib ..
+        cmake -G "Visual Studio 17 2022" -A x64 ..
         cmake --build . --config Release --target SAMPInjection -- /m
 
     - name: Upload artifact
