@@ -5,7 +5,7 @@
 
 #pragma comment(lib, "detours.lib")
 
-// Загрузка встроенных ресурсов
+// Загрузка ресурсов из .rc файла
 std::string GetResourceAsString(int resourceId) {
     HRSRC hRes = FindResourceA(NULL, MAKEINTRESOURCEA(resourceId), RT_RCDATA);
     if (!hRes) return "";
@@ -21,7 +21,7 @@ std::string GetResourceAsString(int resourceId) {
 std::string VIRTUAL_HTML;
 std::string VIRTUAL_JS;
 
-// ========= Хуки =========
+// Хук для CreateFileA
 typedef HANDLE(WINAPI* tCreateFileA)(LPCSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE);
 tCreateFileA oCreateFileA = nullptr;
 
@@ -37,7 +37,6 @@ HANDLE WINAPI HookedCreateFileA(
     std::string path(lpFileName);
     std::replace(path.begin(), path.end(), '\\', '/');
 
-    // Подмена путей
     if (path.find("uiresources/index.html") != std::string::npos) {
         return (HANDLE)0x1337;
     }
@@ -49,6 +48,7 @@ HANDLE WINAPI HookedCreateFileA(
                        dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
+// Хук для ReadFile
 typedef BOOL(WINAPI* tReadFile)(HANDLE, LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 tReadFile oReadFile = nullptr;
 
@@ -59,14 +59,11 @@ BOOL WINAPI HookedReadFile(
     LPDWORD lpNumberOfBytesRead,
     LPOVERLAPPED lpOverlapped
 ) {
-    // Подмена HTML
     if (hFile == (HANDLE)0x1337) {
         memcpy(lpBuffer, VIRTUAL_HTML.c_str(), min(VIRTUAL_HTML.size(), nNumberOfBytesToRead));
         *lpNumberOfBytesRead = (DWORD)VIRTUAL_HTML.size();
         return TRUE;
     }
-    
-    // Подмена JS
     if (hFile == (HANDLE)0x1338) {
         memcpy(lpBuffer, VIRTUAL_JS.c_str(), min(VIRTUAL_JS.size(), nNumberOfBytesToRead));
         *lpNumberOfBytesRead = (DWORD)VIRTUAL_JS.size();
@@ -76,10 +73,9 @@ BOOL WINAPI HookedReadFile(
     return oReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 }
 
-// ========= Точка входа =========
+// Точка входа
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
     if (reason == DLL_PROCESS_ATTACH) {
-        // Загрузка ресурсов
         VIRTUAL_HTML = GetResourceAsString(1000); // IDR_HTML
         VIRTUAL_JS = GetResourceAsString(1001);   // IDR_JS
 
@@ -88,16 +84,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved) {
             return FALSE;
         }
 
-        // Инициализация Detours
         DetourRestoreAfterWith();
         DetourTransactionBegin();
         DetourUpdateThread(GetCurrentThread());
 
-        // Хук CreateFileA
         oCreateFileA = (tCreateFileA)DetourFindFunction("kernel32.dll", "CreateFileA");
         DetourAttach(&(PVOID&)oCreateFileA, HookedCreateFileA);
 
-        // Хук ReadFile
         oReadFile = (tReadFile)DetourFindFunction("kernel32.dll", "ReadFile");
         DetourAttach(&(PVOID&)oReadFile, HookedReadFile);
 
