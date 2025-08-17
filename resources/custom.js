@@ -1134,4 +1134,5 @@ window.yorenovNewHudAssets = {
         main: "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDMwNCAzMDEiIHdpZHRoPSIzMDQiIGhlaWdodD0iMzAxIj4KCTx0aXRsZT5tYWluLXN2ZzwvdGl0bGU+Cgk8c3R5bGU+Cgk8L3N0eWxlPgo8L3N2Zz4=",
         secondary: "data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjIiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDE4MCAyMDMiIHdpZHRoPSIxODAiIGhlaWdodD0iMjAzIj4KCTx0aXRsZT5zZWNvbmRhcnktc3ZnPC90aXRsZT4KCTxzdHlsZT4KCTwvc3R5bGU+Cjwvc3ZnPg=="
     }
+
 }
