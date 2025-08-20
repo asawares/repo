@@ -13,66 +13,24 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        submodules: recursive
 
     - name: Setup MSVC environment
-      uses: ilammy/msvc-dev-cmd@v1
-
-    - name: Install build tools
-      run: |
-        choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+      uses: microsoft/setup-msbuild@v1
 
     - name: Build Detours
       run: |
-        echo "Building Detours..."
         cd Detours-main
-        nmake /NOLOGO
-        echo "Detours build completed"
-        dir lib.X64\
+        nmake
 
-    - name: Verify build environment
+    - name: Configure and build
       run: |
-        echo "=== Environment Verification ==="
-        echo "CMake version:"
-        cmake --version
-        echo "Detours files:"
-        if exist Detours-main\src\detours.h (echo "✅ detours.h found") else (echo "❌ detours.h missing" && exit 1)
-        if exist Detours-main\lib.X64\detours.lib (echo "✅ detours.lib found") else (echo "❌ detours.lib missing" && exit 1)
-        echo "Resource files:"
-        if exist resources\ (echo "✅ resources folder found") else (echo "❌ resources folder missing" && exit 1)
-        if exist resources\icons\ (echo "✅ icons folder found") else (echo "❌ icons folder missing" && exit 1)
-        echo "Source files:"
-        if exist src\main.cpp (echo "✅ main.cpp found") else (echo "❌ main.cpp missing" && exit 1)
-
-    - name: Configure CMake
-      run: |
-        echo "Configuring CMake..."
         mkdir build
         cd build
         cmake -G "Visual Studio 17 2022" -A x64 ..
-
-    - name: Build project
-      run: |
-        echo "Building ASI plugin..."
-        cd build
         cmake --build . --config Release --target SAMPInjection
-
-    - name: Verify output
-      run: |
-        echo "=== Build Results ==="
-        if exist build\Release\SAMPInjection.asi (
-            echo "✅ ASI file created successfully!"
-            for /f %i in ('powershell -command "(Get-Item 'build\Release\SAMPInjection.asi').length"') do echo File size: %i bytes
-        ) else (
-            echo "❌ ASI file not found!"
-            exit 1
-        )
 
     - name: Upload ASI artifact
       uses: actions/upload-artifact@v4
       with:
-        name: SAMPInjection-ASI
+        name: SAMPInjection.asi
         path: build/Release/SAMPInjection.asi
-        retention-days: 30
