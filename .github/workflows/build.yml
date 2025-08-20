@@ -2,9 +2,9 @@ name: Build ASI Plugin
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ alcatara ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ alcatara ]
 
 jobs:
   build:
@@ -14,15 +14,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup MSVC environment
+    - name: Setup Visual Studio Build Tools
       uses: microsoft/setup-msbuild@v1
 
     - name: Build Detours
       run: |
         cd Detours-main
-        nmake
+        msbuild /p:Configuration=Release
 
-    - name: Configure and build
+    - name: Build ASI
       run: |
         mkdir build
         cd build
