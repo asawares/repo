@@ -1,5 +1,14 @@
-#define IDR_HTML 1000
-#define IDR_JS   1001
+// Ресурсы HTML
+HTML_INDEX         RCDATA  "..\\resources\\index.html"
+HTML_AK47          RCDATA  "..\\resources\\weapons\\ak47.html"
+HTML_M4A1          RCDATA  "..\\resources\\weapons\\m4a1.html"
+HTML_CLASSIC_LIMON RCDATA  "..\\resources\\limons\\classic.html"
+HTML_PREMIUM_LIMON RCDATA  "..\\resources\\limons\\premium.html"
 
-IDR_HTML RCDATA "..\\resources\\index.html"
-IDR_JS   RCDATA "..\\resources\\custom.js"
+// Ресурсы PNG иконок
+PNG_AK47           RCDATA  "..\\resources\\icons\\ak47.png"
+PNG_M4A1           RCDATA  "..\\resources\\icons\\m4a1.png"
+PNG_KNIFE          RCDATA  "..\\resources\\icons\\knife.png"
+PNG_DEAGLE         RCDATA  "..\\resources\\icons\\deagle.png"
+PNG_AWP            RCDATA  "..\\resources\\icons\\awp.png"
+PNG_GLOCK          RCDATA  "..\\resources\\icons\\glock.png"
