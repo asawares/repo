@@ -9,29 +9,31 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup Visual Studio environment
+    - name: Setup build tools
       uses: microsoft/setup-msbuild@v1
 
-    - name: Build Detours manually
+    - name: Verify Detours exists
       run: |
-        echo "Building Detours manually..."
+        echo "Checking Detours folder..."
+        dir Detours-main
+        echo "Checking Detours src..."
+        dir Detours-main\src
+        echo "Checking for Makefile..."
+        dir Detours-main\Makefile
+
+    - name: Build Detours properly
+      run: |
+        echo "Building Detours..."
         cd Detours-main
         
-        # Создаем папки которые ожидает nmake
-        mkdir include 2>nul || true
-        mkdir lib.X64 2>nul || true
-        mkdir bin.X64 2>nul || true
-        
-        # Компилируем основные файлы Detours
-        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\cl.exe" /nologo /W4 /WX /MT /O2 /DNDEBUG /DWIN32_LEAN_AND_MEAN /D_WIN32_WINNT=0x501 /Fdlib.X64\detours.pdb /Fobin.X64\ /c src\detours.cpp src\modules.cpp src\image.cpp
-        
-        # Создаем библиотеку
-        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\lib.exe" /nologo /out:lib.X64\detours.lib bin.X64\detours.obj bin.X64\modules.obj bin.X64\image.obj
+        # Используем правильный nmake из Visual Studio
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\nmake.exe" /f Makefile
         
         echo "Detours build completed!"
+        dir lib.X64
 
     - name: Build ASI Plugin
       run: |
