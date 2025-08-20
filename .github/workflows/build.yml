@@ -15,25 +15,10 @@ jobs:
     - name: Setup build tools
       uses: microsoft/setup-msbuild@v1
 
-    - name: Verify Detours exists
+    - name: Build Detours
       run: |
-        echo "Checking Detours folder..."
-        dir Detours-main
-        echo "Checking Detours src..."
-        dir Detours-main\src
-        echo "Checking for Makefile..."
-        dir Detours-main\Makefile
-
-    - name: Build Detours properly
-      run: |
-        echo "Building Detours..."
         cd Detours-main
-        
-        # Используем правильный nmake из Visual Studio
-        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\nmake.exe" /f Makefile
-        
-        echo "Detours build completed!"
-        dir lib.X64
+        nmake.exe
 
     - name: Build ASI Plugin
       run: |
