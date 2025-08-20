@@ -12,12 +12,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Create fake detours.lib
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+    - name: Build Detours
       run: |
-        # Создаем обманку для CMake
-        mkdir Detours-main\lib.X64 2>nul
-        echo "fake lib" > Detours-main\lib.X64\detours.lib
-        echo "Fake detours.lib created"
+        cd Detours-main
+        nmake
 
     - name: Build ASI
       run: |
