@@ -17,12 +17,13 @@ jobs:
     - name: Setup Visual Studio Build Tools
       uses: microsoft/setup-msbuild@v1
 
-    - name: Build Detours
+    - name: Build Detours with nmake (правильный путь)
       run: |
-        cd Detours-main
-        msbuild /p:Configuration=Release
+        $nmakePath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\nmake.exe"
+        & "$nmakePath" /NOLOGO
+      working-directory: Detours-main
 
-    - name: Build ASI
+    - name: Build ASI Plugin
       run: |
         mkdir build
         cd build
