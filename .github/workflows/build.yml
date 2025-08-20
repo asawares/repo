@@ -12,15 +12,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup build tools
-      uses: microsoft/setup-msbuild@v1
-
-    - name: Build Detours
+    - name: Find nmake
       run: |
-        cd Detours-main
-        nmake.exe
+        echo "Поиск nmake..."
+        where nmake
+        echo "Поиск cl.exe..."
+        where cl
+        echo "Директории Visual Studio:"
+        dir "C:\Program Files\Microsoft Visual Studio\2022\*"
 
-    - name: Build ASI Plugin
+    - name: Build ASI (пропускаем Detours)
       run: |
         mkdir build
         cd build
