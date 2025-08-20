@@ -12,17 +12,31 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Build with CMake (автоматическая сборка Detours)
+    - name: Setup Visual Studio environment
+      uses: microsoft/setup-msbuild@v1
+
+    - name: Build Detours manually
       run: |
-        # Собираем Detours через CMake
+        echo "Building Detours manually..."
         cd Detours-main
-        cmake -B build -G "Visual Studio 17 2022" -A x64
-        cmake --build build --config Release
         
-        # Собираем наш ASI
-        cd ..
-        mkdir build_asi
-        cd build_asi
+        # Создаем папки которые ожидает nmake
+        mkdir include 2>nul || true
+        mkdir lib.X64 2>nul || true
+        mkdir bin.X64 2>nul || true
+        
+        # Компилируем основные файлы Detours
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\cl.exe" /nologo /W4 /WX /MT /O2 /DNDEBUG /DWIN32_LEAN_AND_MEAN /D_WIN32_WINNT=0x501 /Fdlib.X64\detours.pdb /Fobin.X64\ /c src\detours.cpp src\modules.cpp src\image.cpp
+        
+        # Создаем библиотеку
+        "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\lib.exe" /nologo /out:lib.X64\detours.lib bin.X64\detours.obj bin.X64\modules.obj bin.X64\image.obj
+        
+        echo "Detours build completed!"
+
+    - name: Build ASI Plugin
+      run: |
+        mkdir build
+        cd build
         cmake -G "Visual Studio 17 2022" -A x64 ..
         cmake --build . --config Release --target SAMPInjection
 
@@ -30,4 +44,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: SAMPInjection.asi
-        path: build_asi/Release/SAMPInjection.asi
+        path: build/Release/SAMPInjection.asi
