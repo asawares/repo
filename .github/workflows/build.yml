@@ -1,31 +1,35 @@
 name: Build ASI Plugin
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup MSVC
-      uses: ilammy/msvc-dev-cmd@v1  # Правильная настройка окружения
+    - name: Setup MSVC environment
+      uses: microsoft/setup-msbuild@v1
 
     - name: Build Detours
       run: |
         cd Detours-main
-        nmake /NOLOGO
+        nmake
 
     - name: Configure and build
       run: |
         mkdir build
         cd build
         cmake -G "Visual Studio 17 2022" -A x64 ..
-        cmake --build . --config Release --target SAMPInjection -- /m
+        cmake --build . --config Release --target SAMPInjection
 
-    - name: Upload artifact
+    - name: Upload ASI artifact
       uses: actions/upload-artifact@v4
       with:
         name: SAMPInjection.asi
