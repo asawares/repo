@@ -5,12 +5,10 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 15
 
     steps:
     - name: Checkout repository
@@ -25,7 +23,6 @@ jobs:
     - name: Install build tools
       run: |
         choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-        choco install -y git
 
     - name: Build Detours
       run: |
@@ -33,51 +30,45 @@ jobs:
         cd Detours-main
         nmake /NOLOGO
         echo "Detours build completed"
-        ls -la lib.X64/
+        dir lib.X64\
 
     - name: Verify build environment
       run: |
         echo "=== Environment Verification ==="
         echo "CMake version:"
         cmake --version
-        echo "MSVC compiler:"
-        cl.exe
         echo "Detours files:"
-        ls -la Detours-main/src/detours.h
-        ls -la Detours-main/lib.X64/detours.lib
+        if exist Detours-main\src\detours.h (echo "✅ detours.h found") else (echo "❌ detours.h missing" && exit 1)
+        if exist Detours-main\lib.X64\detours.lib (echo "✅ detours.lib found") else (echo "❌ detours.lib missing" && exit 1)
         echo "Resource files:"
-        ls -la resources/
-        ls -la resources/weapons/
-        ls -la resources/limons/
-        ls -la resources/icons/
+        if exist resources\ (echo "✅ resources folder found") else (echo "❌ resources folder missing" && exit 1)
+        if exist resources\icons\ (echo "✅ icons folder found") else (echo "❌ icons folder missing" && exit 1)
         echo "Source files:"
-        ls -la src/
+        if exist src\main.cpp (echo "✅ main.cpp found") else (echo "❌ main.cpp missing" && exit 1)
 
     - name: Configure CMake
       run: |
         echo "Configuring CMake..."
         mkdir build
         cd build
-        cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release ..
+        cmake -G "Visual Studio 17 2022" -A x64 ..
 
     - name: Build project
       run: |
         echo "Building ASI plugin..."
         cd build
-        cmake --build . --config Release --target SAMPInjection -- /m /nologo
+        cmake --build . --config Release --target SAMPInjection
 
     - name: Verify output
       run: |
         echo "=== Build Results ==="
-        ls -la build/Release/
-        file="build/Release/SAMPInjection.asi"
-        if [ -f "$file" ]; then
+        if exist build\Release\SAMPInjection.asi (
             echo "✅ ASI file created successfully!"
-            echo "File size: $(ls -la $file | awk '{print $5}') bytes"
-        else
+            for /f %i in ('powershell -command "(Get-Item 'build\Release\SAMPInjection.asi').length"') do echo File size: %i bytes
+        ) else (
             echo "❌ ASI file not found!"
             exit 1
-        fi
+        )
 
     - name: Upload ASI artifact
       uses: actions/upload-artifact@v4
@@ -85,34 +76,3 @@ jobs:
         name: SAMPInjection-ASI
         path: build/Release/SAMPInjection.asi
         retention-days: 30
-        if-no-files-found: error
-
-    - name: Upload build logs
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-logs
-        path: |
-          build/
-          Detours-main/lib.X64/
-        retention-days: 7
-        if-no-files-found: warn
-
-    - name: Create release summary
-      run: |
-        echo "### Build Summary" >> $GITHUB_STEP_SUMMARY
-        echo "✅ **ASI Plugin built successfully!**" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Build Details:**" >> $GITHUB_STEP_SUMMARY
-        echo "- Detours: ✅ Built" >> $GITHUB_STEP_SUMMARY
-        echo "- Resources: ✅ Loaded" >> $GITHUB_STEP_SUMMARY
-        echo "- ASI File: ✅ Created" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Download the ASI file from the Artifacts section.**" >> $GITHUB_STEP_SUMMARY
-
-    - name: Build status notification
-      if: success()
-      run: echo "🎉 Build completed successfully! ASI file is available in artifacts."
-
-    - name: Build failure notification
-      if: failure()
-      run: echo "❌ Build failed! Check the logs for details."
