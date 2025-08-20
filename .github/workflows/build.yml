@@ -3,35 +3,21 @@ name: Build ASI Plugin
 on:
   push:
     branches: [ alcatara ]
-  pull_request:
-    branches: [ alcatara ]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup Visual Studio Build Tools
-      uses: microsoft/setup-msbuild@v1
-
-    - name: Build Detours with nmake (правильный путь)
-      run: |
-        $nmakePath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\nmake.exe"
-        & "$nmakePath" /NOLOGO
-      working-directory: Detours-main
-
-    - name: Build ASI Plugin
+    - name: Setup full Visual Studio
+      uses: actions/setup-vscode@v1
+      
+    - name: Build ASI (без Detours)
       run: |
         mkdir build
         cd build
         cmake -G "Visual Studio 17 2022" -A x64 ..
-        cmake --build . --config Release --target SAMPInjection
-
-    - name: Upload ASI artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: SAMPInjection.asi
-        path: build/Release/SAMPInjection.asi
+        cmake --build . --config Release
