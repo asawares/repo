@@ -2,7 +2,7 @@ name: Build RADMIR VirtualFS DLL
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "Alcatara 2" ]
   pull_request:
 
 jobs:
@@ -10,22 +10,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1. Клонируем репозиторий
       - uses: actions/checkout@v3
 
-      # 2. Настраиваем MSBuild / Visual Studio
       - name: Setup MSVC
         uses: microsoft/setup-msbuild@v1.3.1
 
-      # 3. Создаем папку сборки и конфигурируем CMake для Win32
       - name: Configure CMake
         run: cmake -B build -A Win32
 
-      # 4. Собираем DLL
       - name: Build DLL
         run: cmake --build build --config Release
 
-      # 5. Загружаем DLL как артефакт (v4)
       - name: Upload DLL artifact
         uses: actions/upload-artifact@v4
         with:
