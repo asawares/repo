@@ -10,24 +10,24 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    # Скачиваем репозиторий
-    - uses: actions/checkout@v3
+      # 1. Клонируем репозиторий
+      - uses: actions/checkout@v3
 
-    # Настраиваем MSBuild/VS
-    - name: Setup MSVC
-      uses: microsoft/setup-msbuild@v1.3.1
+      # 2. Настраиваем MSBuild / Visual Studio
+      - name: Setup MSVC
+        uses: microsoft/setup-msbuild@v1.3.1
 
-    # Создаем папку сборки и конфигурируем CMake для Win32 (x86)
-    - name: Configure
-      run: cmake -B build -A Win32
+      # 3. Создаем папку сборки и конфигурируем CMake для Win32 (x86)
+      - name: Configure CMake
+        run: cmake -B build -A Win32
 
-    # Собираем DLL в Release
-    - name: Build Release
-      run: cmake --build build --config Release
+      # 4. Собираем DLL в Release
+      - name: Build Release
+        run: cmake --build build --config Release
 
-- name: Upload artifact
-  uses: actions/upload-artifact@v4
-  with:
-    name: radmir_virtualfs
-    path: build/Release/radmir_virtualfs.dll
-
+      # 5. Загружаем DLL как артефакт (v4)
+      - name: Upload DLL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: radmir_virtualfs
+          path: build/Release/radmir_virtualfs.dll
