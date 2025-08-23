@@ -25,9 +25,9 @@ jobs:
     - name: Build Release
       run: cmake --build build --config Release
 
-    # Загружаем DLL как артефакт
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: radmir_virtualfs
-        path: build/Release/radmir_virtualfs.dll
+- name: Upload artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: radmir_virtualfs
+    path: build/Release/radmir_virtualfs.dll
+
