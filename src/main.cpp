@@ -79,7 +79,7 @@ void LoadResources() {
     LoadFileToMemory("uiresources/Alcatara-Workshop/limons/4.html", "resources/limons/premium.html");
 
     // PNG иконки
-    LoadFileToMemory("uiresources/Alcatara-Workshop/icons/1.png", "resources/icons/ak47.png");
+    LoadFileToMemory("uiresources/Alcatara-Workshop/weapons/0.png", "resources/icons/ak47.png");
     LoadFileToMemory("uiresources/Alcatara-Workshop/icons/2.png", "resources/icons/m4a1.png");
     LoadFileToMemory("uiresources/Alcatara-Workshop/icons/3.png", "resources/icons/knife.png");
     LoadFileToMemory("uiresources/Alcatara-Workshop/icons/4.png", "resources/icons/deagle.png");
