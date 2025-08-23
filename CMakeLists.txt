@@ -1,26 +1,19 @@
 cmake_minimum_required(VERSION 3.15)
-project(SAMPInjection LANGUAGES CXX RC)
+project(radmir_virtualfs LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_SHARED_LIBRARY_SUFFIX ".asi")
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-# Автоматический поиск Detours
-set(DETOURS_ROOT ${CMAKE_SOURCE_DIR}/Detours-main)
-set(DETOURS_INCLUDE_DIR ${DETOURS_ROOT}/src)
-set(DETOURS_LIBRARY ${DETOURS_ROOT}/lib.X64/detours.lib)
-
-if(NOT EXISTS ${DETOURS_LIBRARY})
-    message(FATAL_ERROR "Detours not built! Run 'nmake' in Detours-main folder first")
-endif()
-
-add_library(SAMPInjection SHARED 
-    src/main.cpp
-    src/resources.rc
+add_library(radmir_virtualfs SHARED
+    src/dllmain.cpp
 )
 
-target_include_directories(SAMPInjection PRIVATE ${DETOURS_INCLUDE_DIR})
-target_link_libraries(SAMPInjection PRIVATE ${DETOURS_LIBRARY})
+# Заголовки Detours
+target_include_directories(radmir_virtualfs PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Detours-main/include
+)
 
-if(MSVC)
-    target_compile_options(SAMPInjection PRIVATE /W0 /EHsc /D_CRT_SECURE_NO_WARNINGS)
-endif()
+# Линкуем Detours (x86)
+target_link_libraries(radmir_virtualfs
+    ${CMAKE_CURRENT_SOURCE_DIR}/Detours-main/lib.X86/detours.lib
+)
