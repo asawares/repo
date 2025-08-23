@@ -17,12 +17,12 @@ jobs:
       - name: Setup MSVC
         uses: microsoft/setup-msbuild@v1.3.1
 
-      # 3. Создаем папку сборки и конфигурируем CMake для Win32 (x86)
+      # 3. Создаем папку сборки и конфигурируем CMake для Win32
       - name: Configure CMake
         run: cmake -B build -A Win32
 
-      # 4. Собираем DLL в Release
-      - name: Build Release
+      # 4. Собираем DLL
+      - name: Build DLL
         run: cmake --build build --config Release
 
       # 5. Загружаем DLL как артефакт (v4)
