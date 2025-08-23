@@ -12,8 +12,8 @@ add_library(detours STATIC
     Detours-main/src/creatwth.cpp
 )
 
-# Include для Detours
-target_include_directories(detours PUBLIC Detours-main/include)
+# Include путь к detours.h
+target_include_directories(detours PUBLIC Detours-main/src)
 
 # --- Сборка DLL ---
 add_library(radmir_virtualfs SHARED
@@ -21,6 +21,6 @@ add_library(radmir_virtualfs SHARED
     src/resources.rc
 )
 
-# Передаем include путь из Detours и линкуем
-target_include_directories(radmir_virtualfs PRIVATE Detours-main/include)
+# Передаем include путь к detours.h и линкуем
+target_include_directories(radmir_virtualfs PRIVATE Detours-main/src)
 target_link_libraries(radmir_virtualfs PRIVATE detours)
