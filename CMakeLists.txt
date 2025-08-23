@@ -1,26 +1,26 @@
 cmake_minimum_required(VERSION 3.15)
-project(SAMPInjection LANGUAGES CXX RC)
+project(radmir_virtualfs LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_SHARED_LIBRARY_SUFFIX ".asi")
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-# Автоматический поиск Detours
-set(DETOURS_ROOT ${CMAKE_SOURCE_DIR}/Detours-main)
-set(DETOURS_INCLUDE_DIR ${DETOURS_ROOT}/src)
-set(DETOURS_LIBRARY ${DETOURS_ROOT}/lib.X64/detours.lib)
+# --- Сборка Detours ---
+add_library(detours STATIC
+    Detours-main/src/disasm.cpp
+    Detours-main/src/detours.cpp
+    Detours-main/src/modules.cpp
+    Detours-main/src/creatwth.cpp
+)
 
-if(NOT EXISTS ${DETOURS_LIBRARY})
-    message(FATAL_ERROR "Detours not built! Run 'nmake' in Detours-main folder first")
-endif()
+# Include путь к detours.h
+target_include_directories(detours PUBLIC Detours-main/src)
 
-add_library(SAMPInjection SHARED 
-    src/main.cpp
+# --- Сборка DLL ---
+add_library(radmir_virtualfs SHARED
+    src/dllmain.cpp
     src/resources.rc
 )
 
-target_include_directories(SAMPInjection PRIVATE ${DETOURS_INCLUDE_DIR})
-target_link_libraries(SAMPInjection PRIVATE ${DETOURS_LIBRARY})
-
-if(MSVC)
-    target_compile_options(SAMPInjection PRIVATE /W0 /EHsc /D_CRT_SECURE_NO_WARNINGS)
-endif()
+# Передаем include путь к detours.h и линкуем
+target_include_directories(radmir_virtualfs PRIVATE Detours-main/src)
+target_link_libraries(radmir_virtualfs PRIVATE detours)
