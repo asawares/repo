@@ -1,112 +1,53 @@
-// Build: Win32 (x86), /MT (или как у игры), Detours 4.x
 #define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <Windows.h>
 #include <string>
-#include <unordered_map>
+#include <map>
 #include <vector>
-#include <fstream>
-#include <algorithm>
 #include "detours.h"
+
 #pragma comment(lib, "detours.lib")
 
-struct VFile {
-    std::vector<uint8_t> data;
-    size_t pos = 0;
+struct VirtualFile {
+    std::vector<BYTE> data;
+    size_t size;
 };
 
-static std::unordered_map<std::string, VFile> g_files;         // key: normalized path
-static std::unordered_map<HANDLE, std::string> g_openFiles;    // fake handle -> key
-static CRITICAL_SECTION g_cs;
+std::map<std::string, VirtualFile> VIRTUAL_FILES;
 
-static std::string norm(std::string s) {
-    std::replace(s.begin(), s.end(), '\\', '/');
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return (char)std::tolower(c); });
-    return s;
+// ====== Функция загрузки ресурса из DLL ======
+void LoadResourceToMemory(const std::string& virtualPath, int resourceId) {
+    HMODULE hModule = GetModuleHandleA("radmir_virtualfs.dll"); // имя DLL
+    if (!hModule) hModule = GetModuleHandle(NULL);
+
+    HRSRC hRes = FindResource(hModule, MAKEINTRESOURCE(resourceId), RT_RCDATA);
+    if (!hRes) return;
+
+    HGLOBAL hData = LoadResource(hModule, hRes);
+    if (!hData) return;
+
+    DWORD size = SizeofResource(hModule, hRes);
+    void* pData = LockResource(hData);
+
+    std::vector<BYTE> buffer((BYTE*)pData, (BYTE*)pData + size);
+    VIRTUAL_FILES[virtualPath] = {buffer, buffer.size()};
 }
 
-// ----- generate/recognize fake handles -----
-static HANDLE make_fake_handle() {
-#ifdef _WIN64
-    static uint64_t ctr = 1;
-    uint64_t val = 0xF00D000000000000ull | (ctr++ & 0xFFFFFFFFull);
-    return (HANDLE)val;
-#else
-    static uint32_t ctr = 1;
-    uint32_t val = 0xF00D0000u | (ctr++ & 0xFFFFu);
-    return (HANDLE)val;
-#endif
-}
-static bool is_fake(HANDLE h) {
-#ifdef _WIN64
-    return ( (uint64_t)h & 0xFFFF000000000000ull ) == 0xF00D000000000000ull;
-#else
-    return ( (uint32_t)h & 0xFFFF0000u ) == 0xF00D0000u;
-#endif
-}
-
-// ===== real API pointers =====
-using tCreateFileA = HANDLE (WINAPI*)(LPCSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
-using tCreateFileW = HANDLE (WINAPI*)(LPCWSTR,DWORD,DWORD,LPSECURITY_ATTRIBUTES,DWORD,DWORD,HANDLE);
-using tReadFile    = BOOL   (WINAPI*)(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
-using tCloseHandle = BOOL   (WINAPI*)(HANDLE);
-using tGetFileSize = DWORD  (WINAPI*)(HANDLE,LPDWORD);
-using tGetFileSizeEx = BOOL (WINAPI*)(HANDLE, PLARGE_INTEGER);
-using tSetFilePointer = DWORD (WINAPI*)(HANDLE, LONG, PLONG, DWORD);
-using tSetFilePointerEx = BOOL (WINAPI*)(HANDLE, LARGE_INTEGER, PLARGE_INTEGER, DWORD);
-using tGetFileType = DWORD  (WINAPI*)(HANDLE);
-
-static tCreateFileA      oCreateFileA      = nullptr;
-static tCreateFileW      oCreateFileW      = nullptr;
-static tReadFile         oReadFile         = nullptr;
-static tCloseHandle      oCloseHandle      = nullptr;
-static tGetFileSize      oGetFileSize      = nullptr;
-static tGetFileSizeEx    oGetFileSizeEx    = nullptr;
-static tSetFilePointer   oSetFilePointer   = nullptr;
-static tSetFilePointerEx oSetFilePointerEx = nullptr;
-static tGetFileType      oGetFileType      = nullptr;
-
-// ===== helpers =====
-static bool find_virtual(std::string path, std::string& keyOut) {
-    path = norm(path);
-    for (auto& kv : g_files) {
-        if (path.find(kv.first) != std::string::npos) { keyOut = kv.first; return true; }
-    }
-    return false;
-}
-
-static void load_to_memory(const std::string& virt, const std::wstring& real) {
-    std::ifstream f(real, std::ios::binary);
-    if (!f) return;
-    std::vector<uint8_t> data((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-    VFile vf; vf.data = std::move(data); vf.pos = 0;
-    g_files[norm(virt)] = std::move(vf);
-}
-
-static void load_resources() {
-    // подстройте реальные пути под своё расположение
-    wchar_t modulePath[MAX_PATH]{};
-    GetModuleFileNameW((HMODULE)&__ImageBase, modulePath, MAX_PATH);
-    std::wstring base(modulePath);
-    auto slash = base.find_last_of(L"\\/");
-    if (slash != std::wstring::npos) base.resize(slash+1);
-
-    auto p = [&](const wchar_t* rel)->std::wstring{ return base + rel; };
-
+// ====== Загрузка всех ресурсов ======
+void LoadResources() {
     // HTML
-    load_to_memory("uiresources/index.html", p(L"resources\\index.html"));
-    load_to_memory("uiresources/alcatara-workshop/weapons/1.html", p(L"resources\\weapons\\ak47.html"));
-    load_to_memory("uiresources/alcatara-workshop/weapons/2.html", p(L"resources\\weapons\\m4a1.html"));
-    load_to_memory("uiresources/alcatara-workshop/limons/3.html",   p(L"resources\\limons\\classic.html"));
-    load_to_memory("uiresources/alcatara-workshop/limons/4.html",   p(L"resources\\limons\\premium.html"));
+    LoadResourceToMemory("uiresources/index.html", IDR_INDEX_HTML);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/weapons/1.html", IDR_AK47_HTML);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/weapons/2.html", IDR_M4A1_HTML);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/limons/3.html", IDR_CLASSIC_HTML);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/limons/4.html", IDR_PREMIUM_HTML);
 
     // PNG
-    load_to_memory("uiresources/alcatara-workshop/weapons/0.png", p(L"resources\\icons\\ak47.png"));
-    load_to_memory("uiresources/alcatara-workshop/icons/2.png",   p(L"resources\\icons\\m4a1.png"));
-    load_to_memory("uiresources/alcatara-workshop/icons/3.png",   p(L"resources\\icons\\knife.png"));
-    load_to_memory("uiresources/alcatara-workshop/icons/4.png",   p(L"resources\\icons\\deagle.png"));
-    load_to_memory("uiresources/alcatara-workshop/icons/5.png",   p(L"resources\\icons\\awp.png"));
-    load_to_memory("uiresources/alcatara-workshop/icons/glock.png",p(L"resources\\icons\\glock.png"));
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/weapons/0.png", IDR_AK47_PNG);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/icons/2.png", IDR_M4A1_PNG);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/icons/3.png", IDR_KNIFE_PNG);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/icons/4.png", IDR_DEAGLE_PNG);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/icons/5.png", IDR_AWP_PNG);
+    LoadResourceToMemory("uiresources/Alcatara-Workshop/icons/glock.png", IDR_GLOCK_PNG);
 }
 
 // ===== Hooks =====
