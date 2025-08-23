@@ -1,0 +1,33 @@
+name: Build RADMIR VirtualFS DLL
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    # Скачиваем репозиторий
+    - uses: actions/checkout@v3
+
+    # Настраиваем MSBuild/VS
+    - name: Setup MSVC
+      uses: microsoft/setup-msbuild@v1.3.1
+
+    # Создаем папку сборки и конфигурируем CMake для Win32 (x86)
+    - name: Configure
+      run: cmake -B build -A Win32
+
+    # Собираем DLL в Release
+    - name: Build Release
+      run: cmake --build build --config Release
+
+    # Загружаем DLL как артефакт
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: radmir_virtualfs
+        path: build/Release/radmir_virtualfs.dll
